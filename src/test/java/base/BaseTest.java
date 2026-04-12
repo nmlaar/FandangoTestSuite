@@ -28,6 +28,8 @@ import java.util.Optional;
 
 public class BaseTest {
     protected static final String BASE_URL = "https://www.fandango.com/";
+    protected static final String MOVIE_URL = "https://www.fandango.com/the-super-mario-galaxy-movie-" +
+            "2026-242307/movie-overview";
     protected WebDriver driver;
     protected WebDriverWait wait;
 
@@ -42,7 +44,8 @@ public class BaseTest {
         options.addArguments("--disable-dev-shm-usage");
         options.addArguments("--no-default-browser-check");
         options.addArguments("--disable-search-engine-choice-screen");
-        options.addArguments("--user-agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 14_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36");
+        options.addArguments("--user-agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 14_6) " +
+                "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36");
         options.setExperimentalOption("excludeSwitches", List.of("enable-automation"));
         options.setExperimentalOption("useAutomationExtension", false);
         options.setExperimentalOption("prefs", Map.of(
@@ -52,11 +55,11 @@ public class BaseTest {
         ));
 
         driver = new ChromeDriver(options);
-        wait = new WebDriverWait(driver, Duration.ofSeconds(20));
-        driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(2));
+        wait = new WebDriverWait(driver, Duration.ofSeconds(10));
         driver.manage().window().maximize();
         maskAutomationFlag();
         driver.get(BASE_URL);
+        clearBrowserState();
         dismissBrowserAlertIfPresent();
         dismissPopups();
     }
@@ -66,15 +69,29 @@ public class BaseTest {
         if (driver == null) {
             return;
         }
-
+// This will take a screenshot everytime a test fails
         try {
             dismissBrowserAlertIfPresent();
             if (result != null && !result.isSuccess()) {
                 takeScreenshot(result.getName());
+                clearBrowserState();
             }
         } finally {
             driver.quit();
         }
+    }
+
+    protected void clearBrowserState() {
+        try {
+            driver.manage().deleteAllCookies();
+        } catch (Exception ignored) {}
+
+        try {
+            ((JavascriptExecutor) driver).executeScript(
+                    "try { window.localStorage.clear(); } catch(e) {}" +
+                            "try { window.sessionStorage.clear(); } catch(e) {}"
+            );
+        } catch (Exception ignored) {}
     }
 
     protected Optional<WebElement> findVisibleElement(By... locators) {
@@ -127,15 +144,10 @@ public class BaseTest {
         dismissBrowserAlertIfPresent();
 
         By[] popupButtons = new By[] {
-                By.xpath("//button[normalize-space()='Continue']"),
+                By.xpath("//*[@id='onetrust-accept-btn-handler']"),
                 By.xpath("//button[contains(normalize-space(),'Accept')]"),
-                By.xpath("//button[contains(normalize-space(),'Close')]"),
                 By.xpath("//button[contains(normalize-space(),'No Thanks')]"),
-                By.xpath("//button[contains(normalize-space(),'Not Now')]"),
-                By.xpath("//button[contains(@aria-label,'Close')]"),
-                By.cssSelector("button[aria-label*='close' i]"),
-                By.cssSelector("[data-testid*='close' i]"),
-                By.cssSelector("[class*='close']")
+                By.xpath("//button[contains(normalize-space(),'Ok')]")
         };
 
         for (By locator : popupButtons) {

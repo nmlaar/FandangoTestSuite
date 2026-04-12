@@ -52,6 +52,20 @@ public class MoviePage {
             By.xpath("//*[contains(normalize-space(),'Loading format filters')]")
     };
 
+    private final By[] moviePosterLocators = new By[] {
+            By.cssSelector("img[alt*='poster' i]"),
+            By.cssSelector("img[src*='poster']"),
+            By.cssSelector(".movie-poster img"),
+            By.cssSelector("[data-testid*='poster'] img")
+    };
+
+    private final By[] synopsisLocators = new By[] {
+            By.xpath("//*[contains(normalize-space(),'Synopsis')]"),
+            By.xpath("//*[contains(normalize-space(),'Overview')]"),
+            By.cssSelector(".synopsis"),
+            By.cssSelector("[data-testid*='synopsis']")
+    };
+
     public MoviePage(WebDriver driver) {
         this.driver = driver;
         this.wait = new WebDriverWait(driver, Duration.ofSeconds(15));
@@ -59,6 +73,14 @@ public class MoviePage {
 
     public boolean isMovieDetailLoaded() {
         return driver.getCurrentUrl().contains("movie-overview") && !getMovieTitle().isBlank();
+    }
+
+    /**
+     * Returns true when the current URL contains "movie-overview", without
+     * requiring the title element to be resolved. Use for URL-only assertions.
+     */
+    public boolean isOnMoviePage() {
+        return driver.getCurrentUrl().contains("movie-overview");
     }
 
     public String getMovieTitle() {
@@ -83,6 +105,13 @@ public class MoviePage {
             }
         }
         return "";
+    }
+
+    /**
+     * Returns true when a valid MPAA rating string is present on the page.
+     */
+    public boolean isRatingDisplayed() {
+        return !getRating().isBlank();
     }
 
     public boolean isCastSectionDisplayed() {

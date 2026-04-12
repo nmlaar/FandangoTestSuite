@@ -56,6 +56,11 @@ public class HomePage {
             By.xpath("//button[normalize-space()='Go']")
     };
 
+    private final By[] pageHeadingLocators = new By[] {
+            By.tagName("h1"),
+            By.tagName("h2")
+    };
+
     public HomePage(WebDriver driver) {
         this.driver = driver;
         this.wait = new WebDriverWait(driver, Duration.ofSeconds(15));
@@ -63,6 +68,15 @@ public class HomePage {
 
     public boolean isLoaded() {
         return driver.getTitle().contains("Fandango") && isAnyElementVisible(trendingSectionLocators);
+    }
+
+    /**
+     * Returns true when the page title contains "Fandango", without
+     * requiring any specific section to be visible. Useful for a quick
+     * title-only assertion.
+     */
+    public boolean isTitleCorrect() {
+        return driver.getTitle().contains("Fandango");
     }
 
     public void enterSearchQuery(String query) {
@@ -88,6 +102,19 @@ public class HomePage {
                     .orElseThrow(() -> new IllegalStateException("Search input was not found on the home page."));
             searchInput.sendKeys(Keys.ENTER);
         }
+        return new SearchPage(driver);
+    }
+
+    /**
+     * Clears the search input and immediately submits (empty-string search).
+     */
+    public SearchPage submitEmptySearch() {
+        WebElement searchInput = firstVisible(searchInputLocators)
+                .orElseThrow(() -> new IllegalStateException("Search input was not found on the home page."));
+        wait.until(ExpectedConditions.visibilityOf(searchInput));
+        searchInput.click();
+        searchInput.clear();
+        searchInput.sendKeys(Keys.ENTER);
         return new SearchPage(driver);
     }
 
@@ -127,6 +154,20 @@ public class HomePage {
         }
 
         return true;
+    }
+
+    /**
+     * Returns true when the location input is visible, meaning a
+     * location pop-up (or location field) is present on the page.
+     */
+    public boolean isLocationPopupPresent() {
+        return firstVisible(locationInputLocators)
+                .map(el -> {
+                    String placeholder = Optional.ofNullable(el.getAttribute("placeholder"))
+                            .orElse("").toLowerCase();
+                    return !placeholder.contains("movie");
+                })
+                .orElse(false);
     }
 
     private Optional<WebElement> firstVisible(By... locators) {

@@ -37,6 +37,12 @@ public class SearchPage {
             By.xpath("//*[contains(@class,'autocomplete') or contains(@class,'typeahead') or contains(@class,'suggest')]//*[self::li or self::a or self::button]")
     };
 
+    private final By[] searchInputLocators = new By[] {
+            By.cssSelector("input[placeholder*='movie']"),
+            By.xpath("//input[contains(@placeholder,'movie')]"),
+            By.xpath("//input[contains(@name,'search')]")
+    };
+
     public SearchPage(WebDriver driver) {
         this.driver = driver;
         this.wait = new WebDriverWait(driver, Duration.ofSeconds(15));
@@ -46,9 +52,25 @@ public class SearchPage {
         return driver.getCurrentUrl().contains("/search") && isAnyElementVisible(resultSectionLocators);
     }
 
+    /**
+     * Returns true when the URL contains "/search", regardless of whether
+     * any results are showing. Useful for verifying the page transitioned.
+     */
+    public boolean isOnSearchPage() {
+        return driver.getCurrentUrl().contains("/search");
+    }
+
     public int getResultCount() {
         waitForResultsContainer();
         return visibleElements(movieResultLinks).size();
+    }
+
+    /**
+     * Returns true when at least one movie result link is visible.
+     */
+    public boolean hasResults() {
+        waitForResultsContainer();
+        return !visibleElements(movieResultLinks).isEmpty();
     }
 
     public List<String> getAutoSuggestions() {
@@ -62,6 +84,13 @@ public class SearchPage {
             }
         }
         return new ArrayList<>(suggestions);
+    }
+
+    /**
+     * Returns true when the autocomplete dropdown contains at least one entry.
+     */
+    public boolean hasAutoSuggestions() {
+        return !getAutoSuggestions().isEmpty();
     }
 
     public MoviePage clickFirstResult() {
@@ -82,6 +111,26 @@ public class SearchPage {
                 .filter(text -> !text.isBlank())
                 .findFirst()
                 .orElse("");
+    }
+
+    /**
+     * Returns true when a "no results" message element is visible.
+     */
+    public boolean isNoResultsMessageDisplayed() {
+        return !getNoResultsMessage().isBlank();
+    }
+
+    /**
+     * Returns true when the search input field is present on the search
+     * results page (Fandango keeps it visible for follow-up searches).
+     */
+    public boolean isSearchInputDisplayed() {
+        for (By locator : searchInputLocators) {
+            for (WebElement element : driver.findElements(locator)) {
+                if (isDisplayed(element)) return true;
+            }
+        }
+        return false;
     }
 
     private void waitForResultsContainer() {

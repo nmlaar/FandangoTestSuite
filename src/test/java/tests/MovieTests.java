@@ -6,7 +6,6 @@ import org.testng.annotations.Test;
 import pages.MoviePage;
 
 public class MovieTests extends BaseTest {
-    private static final String MOVIE_URL = "https://www.fandango.com/the-super-mario-galaxy-movie-2026-242307/movie-overview";
 
     @Test
     public void verifyMovieDetailsLoad() {

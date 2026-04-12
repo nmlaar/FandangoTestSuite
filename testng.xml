@@ -23,4 +23,28 @@
             <class name="tests.TheaterTests"/>
         </classes>
     </test>
+
+    <test name="UIValidation Tests">
+        <classes>
+            <class name="tests.UIValidationTests"/>
+        </classes>
+    </test>
+
+    <test name="Checkout Tests">
+        <classes>
+            <class name="tests.CheckoutTests"/>
+        </classes>
+    </test>
+
+    <test name="Error Handling Tests">
+        <classes>
+            <class name="tests.ErrorHandlingTests"/>
+        </classes>
+    </test>
+
+    <test name="Navigation Tests">
+        <classes>
+            <class name="tests.NavigationTests"/>
+        </classes>
+    </test>
 </suite>
