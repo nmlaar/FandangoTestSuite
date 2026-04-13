@@ -16,6 +16,10 @@ import org.openqa.selenium.support.ui.WebDriverWait;
 import org.testng.ITestResult;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
+import com.aventstack.extentreports.*;
+import org.testng.annotations.BeforeSuite;
+import org.testng.annotations.AfterSuite;
+import java.lang.reflect.Method;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -27,14 +31,22 @@ import java.util.Map;
 import java.util.Optional;
 
 public class BaseTest {
+    protected static ExtentReports extent;
+    protected ExtentTest test;
     protected static final String BASE_URL = "https://www.fandango.com/";
     protected static final String MOVIE_URL = "https://www.fandango.com/the-super-mario-galaxy-movie-" +
             "2026-242307/movie-overview";
     protected WebDriver driver;
     protected WebDriverWait wait;
 
+    @BeforeSuite
+    public void setupReport() {
+        extent = ReportManager.getInstance();
+    }
+
     @BeforeMethod
-    public void setUp() {
+    public void setUp(Method method) {
+        test = extent.createTest(method.getName());
         WebDriverManager.chromedriver().setup();
 
         ChromeOptions options = new ChromeOptions();
@@ -66,19 +78,27 @@ public class BaseTest {
 
     @AfterMethod
     public void tearDown(ITestResult result) {
-        if (driver == null) {
-            return;
-        }
-// This will take a screenshot everytime a test fails
-        try {
-            dismissBrowserAlertIfPresent();
-            if (result != null && !result.isSuccess()) {
-                takeScreenshot(result.getName());
-                clearBrowserState();
+        if (result != null) {
+            if (result.getStatus() == ITestResult.FAILURE) {
+                String screenshotPath = takeScreenshot(result.getName());
+                test.fail(result.getThrowable());
+
+                if (screenshotPath != null) {
+                    test.addScreenCaptureFromPath(screenshotPath);
+                }
+
+            } else if (result.getStatus() == ITestResult.SUCCESS) {
+                test.pass("Test passed");
+            } else {
+                test.skip("Test skipped");
             }
-        } finally {
-            driver.quit();
         }
+        driver.quit();
+    }
+
+    @AfterSuite
+    public void tearDownReport() {
+        extent.flush();
     }
 
     protected void clearBrowserState() {
@@ -108,17 +128,6 @@ public class BaseTest {
             }
         }
         return Optional.empty();
-    }
-
-    protected WebElement waitForElement(By... locators) {
-        for (By locator : locators) {
-            try {
-                return wait.until(ExpectedConditions.visibilityOfElementLocated(locator));
-            } catch (Exception ignored) {
-                // Try the next fallback locator.
-            }
-        }
-        throw new IllegalStateException("Unable to locate expected element.");
     }
 
     protected boolean clickIfPresent(By... locators) {
@@ -155,17 +164,23 @@ public class BaseTest {
         }
     }
 
-    protected void takeScreenshot(String testName) {
+    protected String takeScreenshot(String testName) {
         try {
             Path screenshotsDirectory = Path.of("target", "screenshots");
             Files.createDirectories(screenshotsDirectory);
 
             String sanitizedName = testName.replaceAll("[^a-zA-Z0-9-_]", "_");
             Path screenshotPath = screenshotsDirectory.resolve(sanitizedName + ".png");
+
             byte[] screenshot = ((TakesScreenshot) driver).getScreenshotAs(OutputType.BYTES);
-            Files.copy(new java.io.ByteArrayInputStream(screenshot), screenshotPath, StandardCopyOption.REPLACE_EXISTING);
+            Files.copy(new java.io.ByteArrayInputStream(screenshot),
+                    screenshotPath,
+                    StandardCopyOption.REPLACE_EXISTING);
+
+            return screenshotPath.toString();
+
         } catch (IOException ignored) {
-            // A failed screenshot should not hide the test failure itself.
+            return null;
         }
     }
 
