@@ -75,17 +75,17 @@ public class CheckoutPage {
 
     // Guest email form locators
     private final By guestEmailInput = By.xpath("//*[@id='guestForm']/fieldset//input[contains(@type,'email')]");
-    // Fallback using the className mentioned in requirements
-    private final By guestEmailInputFallback = By.cssSelector("input.form__input.ctHidden[type='email'], input.form__input[type='email']");
+    private final By guestEmailInputFallback = By.cssSelector("input.form__input.ctHidden[type='email']," +
+            " input.form__input[type='email']");
     private final By guestContinueBtn = By.id("btnGuest");
 
     public CheckoutPage(WebDriver driver) {
         this.driver = driver;
-        this.wait = new WebDriverWait(driver, Duration.ofSeconds(10));
-        this.longWait = new WebDriverWait(driver, Duration.ofSeconds(20));
+        this.wait = new WebDriverWait(driver, Duration.ofSeconds(5));
+        this.longWait = new WebDriverWait(driver, Duration.ofSeconds(10));
     }
 // Select first theater found from list
-    public boolean selectFirstTheater() {
+    public void selectFirstTheater() {
 
         for (By locator : theaterLocators) {
             List<WebElement> elements = driver.findElements(locator);
@@ -98,88 +98,127 @@ public class CheckoutPage {
                         safeClick(element);
                         // wait for page update (showtimes load)
                         wait.until(ExpectedConditions.stalenessOf(element));
-                        return true;
                     }
                 } catch (Exception ignored) {}
             }
         }
-
-        return false;
     }
 
-    // Select first valid showdate (NOT disabled)
-    public boolean selectFirstValidShowDate() {
-        for (By locator : showDateLocators) {
-            List<WebElement> showdates = driver.findElements(locator);
-            for (WebElement showdate : showdates) {
-                try {
-                    if (!showdate.isDisplayed()) continue;
-                    String classes = showdate.getAttribute("class");
-                    if (!classes.contains("disabled")) {
-                        safeClick(showdate);
-                        return true;
-                    }
-                } catch (Exception ignored) {}
-            }
-        }
-        return false;
-    }
-
-    public boolean selectFirstValidShowTime() {
-        for (By locator : showTimeLocators) {
-            List<WebElement> showtimes = driver.findElements(locator);
-            for(WebElement showtime : showtimes) {
-                try {
-                    if (!showtime.isDisplayed()) continue;
-
-                    String classes = showtime.getAttribute("class");
-
-                    if (!classes.contains("disabled")) {
-
-                        safeClick(showtime);
-
-//                        // wait for seat map to load
-//                        wait.until(ExpectedConditions.presenceOfElementLocated(
-//                                By.cssSelector(".seat-map__seat")
-
-                            return true;
-                    }
-
-                } catch (Exception ignored) {}
-            }
-        }
-        return false;
-    }
-
-
-    // Select first available seat
-    public boolean selectFirstAvailableSeat() {
-        // Wait for the seat map to be fully rendered before querying seats
-        try {
-            wait.until(ExpectedConditions.presenceOfAllElementsLocatedBy(
-                    By.cssSelector(".seat-map__seat")));
-        } catch (Exception ignored) {}
-        List<WebElement> seats = driver.findElements(By.cssSelector(".seat-map__seat"));
-        for (WebElement seat : seats) {
+    private void clickFirstStaleless(By[] locators, By nextContentLocator) {
+        for (By locator : locators) {
             try {
-                if (!seat.isDisplayed()) continue;
-                String classes = seat.getAttribute("class");
-                String ariaDisabled = seat.getAttribute("aria-disabled");
-                boolean isReserved = classes.contains("reservedSeat");
-                boolean isDisabled = "true".equals(ariaDisabled);
-                if (!isReserved && !isDisabled) {
-                    safeClick(seat);
-                    // BUG FIX: wait for the selectedSeat class to be applied before
-                    // returning, so isSeatSelected() won't race against the DOM update.
-                    try {
-                        wait.until(ExpectedConditions.presenceOfElementLocated(
-                                By.cssSelector(".seat-map__seat.selectedSeat")));
-                    } catch (Exception ignored) {}
-                    return true;
+                List<WebElement> elements =
+                        wait.until(ExpectedConditions.presenceOfAllElementsLocatedBy(locator));
+
+                // Snapshot existing content before click
+                List<WebElement> oldContent = driver.findElements(nextContentLocator);
+
+                for (WebElement element : elements) {
+                    String classes = element.getAttribute("class");
+
+                    if (classes.contains("disabled")) continue;
+
+                    safeClick(element);
+
+                    // Wait for old content to disappear
+                    if (!oldContent.isEmpty()) {
+                        try {
+                            wait.until(ExpectedConditions.stalenessOf(oldContent.get(0)));
+                        } catch (Exception ignored) {}
+                    }
+
+                    // Wait for new content to appear
+                    wait.until(ExpectedConditions.presenceOfElementLocated(nextContentLocator));
+                    System.out.println("Success: " + locator);
+                    return;
                 }
-            } catch (Exception ignored) {}
+
+            } catch (TimeoutException e) {
+                System.out.println("Timeout: " + locator);
+            } catch (Exception e) {
+                System.out.println("Error: " + locator);
+            }
         }
-        return false;
+    }
+
+    public void selectFirstValidShowDate() {
+        clickFirstStaleless(showDateLocators, By.className("showtime-btn--available"));
+    }
+    public void selectFirstValidShowTime() {
+        clickFirstStaleless(showTimeLocators, By.cssSelector(".seat-map__seat"));
+    }
+
+    public void selectFirstAvailableSeat() {
+        By seatsLocator = By.cssSelector(".seat-map__seat");
+
+        for (int attempt = 0; attempt < 3; attempt++) {
+            try { Thread.sleep(1500); } catch (InterruptedException ignored) {}
+            // Validate seat map
+            if (!waitForSeatMapOrError()) {
+                System.out.println("[INFO] Seat map failed to load → refreshing...");
+                driver.navigate().refresh();
+                continue;
+            }
+
+            List<WebElement> seats = driver.findElements(seatsLocator);
+
+            for (WebElement seat : seats) {
+                try {
+                    if (!seat.isDisplayed()) continue;
+
+                    String classes = seat.getAttribute("class");
+                    String ariaDisabled = seat.getAttribute("aria-disabled");
+
+                    boolean isReserved = classes.contains("reservedSeat");
+                    boolean isDisabled = "true".equals(ariaDisabled);
+
+                    if (isReserved || isDisabled) continue;
+
+                    safeClick(seat);
+
+                    // Detect popup AFTER click
+                    if (isSeatErrorPopupVisible()) {
+                        System.out.println("Seat rejected → refreshing...");
+                        driver.navigate().refresh();
+                        break; // retry outer loop
+                    }
+
+                    // Confirm selection
+                    boolean selected = wait.until(driver ->
+                            seat.getAttribute("class").contains("selectedSeat")
+                    );
+
+                    if (selected) return;
+
+                } catch (Exception ignored) {}
+            }
+
+            // fallback retry
+            driver.navigate().refresh();
+        }
+
+    }
+
+
+    private boolean waitForSeatMapOrError() {
+        By seatsLocator = By.cssSelector(".seat-map__seat");
+
+        try {
+            return wait.until(driver -> {
+                boolean hasSeats = driver.findElements(seatsLocator).size() > 5;
+                boolean hasError = isSeatErrorPopupVisible();
+
+                if (hasError) return false;   // force retry
+                return hasSeats;              // success only if seats exist
+            });
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    private boolean isSeatErrorPopupVisible() {
+            WebElement element = driver.findElement(By.xpath("//*[@id='SeatPickerModal__Alert']/button"));
+        return element.isDisplayed();
     }
 
     // Verify seat selection
@@ -195,14 +234,14 @@ public class CheckoutPage {
 
     /**
      * Full checkout navigation sequence:
-     *
+
      *  1. Click "Next" (id=NextButton) — closes the seat-map overlay
      *  2. Click "Next" on the "Review your Tickets" page
      *     (id=ticket-selection-overlay-next-btn)
      *  3a. If the Jurassic upsell modal appears, decline it
      *      (id=jurassic-modal-decline-btn)
      *  3b. Otherwise click "Continue to Checkout" (id=buynow-continue-btn)
-     *
+
      * Returns true only when all required steps completed successfully.
      */
     public boolean getTicketCheckout() {
@@ -212,11 +251,7 @@ public class CheckoutPage {
         }
 
         // Step 2 – "Review your Tickets" next button
-        if (!clickById(reviewNextButtonLocator, "ticket-selection-overlay-next-btn")) {
-            return false;
-        }
-
-        return true;
+        return clickById(reviewNextButtonLocator, "ticket-selection-overlay-next-btn");
     }
 
     /**
@@ -225,7 +260,7 @@ public class CheckoutPage {
      * popup's continue button and clicks it.
      * Returns true if the button was found and clicked.
      */
-    public boolean clickContinueToCheckout() {
+    public void clickContinueToCheckout() {
         // Give the modal a short window to appear before assuming it won't
         try {
             WebElement declineBtn = new WebDriverWait(driver, Duration.ofSeconds(5))
@@ -240,9 +275,7 @@ public class CheckoutPage {
             WebElement continueBtn = longWait.until(
                     ExpectedConditions.elementToBeClickable(continueToCheckoutBtn));
             safeClick(continueBtn);
-            return true;
-        } catch (Exception e) {
-            return false;
+        } catch (Exception ignored) {
         }
     }
 
@@ -255,24 +288,23 @@ public class CheckoutPage {
         return isAnyElementVisible(guestCheckoutLocators);
     }
 
-    public boolean clickGuestCheckout() {
+    public void clickGuestCheckout() {
         for (By locator : guestCheckoutLocators) {
             List<WebElement> elements = driver.findElements(locator);
             for (WebElement element : elements) {
                 try {
                     if (!element.isDisplayed()) continue;
                     safeClick(element);
-                    return true;
+                    return;
                 } catch (Exception ignored) {}
             }
         }
-        return false;
     }
 
     /**
      * Enters a guest e-mail address and clicks the "Continue" (btnGuest) button.
      * This is required to reach the payment-input step.
-     *
+
      * Returns true when the form was found and submitted.
      */
     public boolean enterGuestEmailAndContinue(String email) {
@@ -339,7 +371,6 @@ public class CheckoutPage {
         return getOrderTotalText().contains("$");
     }
 
-    // ── Quantity ──────────────────────────────────────────────────────────────────
 
     public boolean increaseTicketQuantity(int times) {
         for (int i = 0; i < times; i++) {
@@ -361,7 +392,6 @@ public class CheckoutPage {
         return true;
     }
 
-    // ── Private helpers ───────────────────────────────────────────────────────────
 
     /**
      * Waits for a button by its locator and clicks it.

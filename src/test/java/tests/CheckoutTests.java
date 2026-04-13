@@ -71,7 +71,6 @@ public class CheckoutTests extends BaseTest {
         );
     }
 
-    // ── verifyGuestCheckout ────────────────────────────────────────────────────────
     /**
      * Proceeds to the checkout page without a signed-in account and verifies
      * that a "Continue as Guest" option is presented.
@@ -101,14 +100,13 @@ public class CheckoutTests extends BaseTest {
         );
     }
 
-    // ── verifyPaymentPageLoads ─────────────────────────────────────────────────────
     /**
      * Completes the full seat-selection and checkout flow, then verifies that
      * a payment form or credit-card input is displayed.
-     *
+
      * Pass: a form element or payment-related heading is visible.
      * Fail: no payment form appears after navigating through checkout.
-     *
+
      * Note: reaching the payment page typically requires either a guest session
      * or a signed-in account; the test asserts on the URL as a fallback.
      */
