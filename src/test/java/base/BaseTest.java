@@ -114,6 +114,10 @@ public class BaseTest {
         } catch (Exception ignored) {}
     }
 
+    protected void scrollDown(int pixels) {
+        ((JavascriptExecutor) driver).executeScript("window.scrollBy(0, arguments[0]);", pixels);
+    }
+
     protected Optional<WebElement> findVisibleElement(By... locators) {
         for (By locator : locators) {
             List<WebElement> elements = driver.findElements(locator);

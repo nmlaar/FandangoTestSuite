@@ -18,13 +18,13 @@ Dependencies are managed in `pom.xml` (Selenium, TestNG, WebDriverManager for Ch
 1. Open this folder as a project and let Maven import finish.
 2. **Full suite:** right-click `testng.xml` → **Run 'Fandango Test Suite'** (or use the green gutter icon).
 
-   This runs all four test classes with parallel execution (`parallel="classes"`, `thread-count="2"`).
+   This runs all eight test classes with parallel execution (`parallel="classes"`, `thread-count="2"`).
 
 3. **Single class:** open e.g. `src/test/java/tests/HomeTests.java` → right-click the class → **Run**.
 
 4. **Single method:** use the green gutter icon next to a `@Test` method.
 
-Do **not** run `BaseTest.java` as the only “test”: it has no `@Test` methods. It only provides `@BeforeMethod` / `@AfterMethod` setup used by `HomeTests`, `SearchTests`, `MovieTests`, and `TheaterTests`.
+Do **not** run `BaseTest.java` as the only “test”: it has no `@Test` methods. It only provides `@BeforeMethod` / `@AfterMethod` setup used by `HomeTests`, `SearchTests`, `MovieTests`, `TheaterTests`, `UIValidationTests`, `CheckoutTests`, `ErrorHandlingTests`, and `NavigationTests`.
 
 ### Command line
 
@@ -42,7 +42,7 @@ Surefire is configured to use `testng.xml`.
 src/test/java/
 ├── base/BaseTest.java          # WebDriver setup, popups, screenshots on failure
 ├── pages/                      # Page objects (Home, Search, Movie, Theater, Checkout)
-└── tests/                      # TestNG test classes (4 classes, 5 methods each)
+└── tests/                      # TestNG test classes (8 classes)
 testng.xml                      # Combined suite for all tests
 pom.xml
 ```

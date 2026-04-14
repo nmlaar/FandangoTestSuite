@@ -10,8 +10,11 @@ public class TheaterTests extends BaseTest {
     private static final String THEATERS_URL = "https://www.fandango.com/movie-theaters";
 
     @Test
-    public void verifyTheaterPageLoads() {
+    public void verifyTheaterPageLoads() throws InterruptedException {
         driver.get(MOVIE_URL);
+        Thread.sleep(1500);
+        scrollDown(300);
+        Thread.sleep(500);
         TheaterPage theaterPage = new TheaterPage(driver);
 
         Assert.assertTrue(theaterPage.isTheaterListDisplayed(),
@@ -19,31 +22,51 @@ public class TheaterTests extends BaseTest {
     }
 
     @Test
-    public void verifyTheaterSearch() {
+    public void verifyTheaterSearch() throws InterruptedException {
         driver.get(THEATERS_URL);
+        Thread.sleep(1500);
+        scrollDown(300);
+        Thread.sleep(500);
         TheaterPage theaterPage = new TheaterPage(driver);
         theaterPage.searchByLocation("33101");
+        Thread.sleep(1000);
+        scrollDown(400);
+        Thread.sleep(500);
 
         Assert.assertTrue(theaterPage.isTheaterListDisplayed() || !theaterPage.getTheaterNames().isEmpty(),
                 "Searching by ZIP code should expose theater results or theater content.");
     }
 
     @Test
-    public void verifyTheaterSelection() {
+    public void verifyTheaterSelection() throws InterruptedException {
         driver.get(MOVIE_URL);
+        Thread.sleep(1500);
+        scrollDown(300);
+        Thread.sleep(500);
         TheaterPage theaterPage = new TheaterPage(driver);
+        boolean theaterSelected = theaterPage.selectFirstTheater();
+        Thread.sleep(1000);
+        scrollDown(300);
+        Thread.sleep(500);
 
-        Assert.assertTrue(theaterPage.selectFirstTheater(),
+        Assert.assertTrue(theaterSelected,
                 "A visible theater entry should be selectable from the theater list.");
     }
 
     @Test
-    public void verifyShowtimeFiltering() {
+    public void verifyShowtimeFiltering() throws InterruptedException {
         driver.get(MOVIE_URL);
+        Thread.sleep(1500);
+        scrollDown(300);
+        Thread.sleep(500);
         TheaterPage theaterPage = new TheaterPage(driver);
         String selectedBefore = theaterPage.getSelectedDateLabel();
+        boolean filtered = theaterPage.filterByShowtime("Wednesday");
+        Thread.sleep(1000);
+        scrollDown(300);
+        Thread.sleep(500);
 
-        Assert.assertTrue(theaterPage.filterByShowtime("Wednesday"),
+        Assert.assertTrue(filtered,
                 "Selecting a different showtime day should be handled successfully.");
 
         String selectedAfter = theaterPage.getSelectedDateLabel();
@@ -52,8 +75,11 @@ public class TheaterTests extends BaseTest {
     }
 
     @Test
-    public void verifyMapOrLocationPresent() {
+    public void verifyMapOrLocationPresent() throws InterruptedException {
         driver.get(MOVIE_URL);
+        Thread.sleep(1500);
+        scrollDown(300);
+        Thread.sleep(500);
         TheaterPage theaterPage = new TheaterPage(driver);
 
         Assert.assertTrue(theaterPage.isMapDisplayed() || !theaterPage.getTheaterNames().isEmpty(),
