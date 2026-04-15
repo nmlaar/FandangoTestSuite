@@ -13,9 +13,7 @@ import java.util.regex.Pattern;
 
 public class MoviePage {
     private static final Pattern RATING_PATTERN = Pattern.compile("^(G|PG|PG-13|R|NC-17|Not Rated).*$");
-
     private final WebDriver driver;
-    private final WebDriverWait wait;
 
     private final By[] titleLocators = new By[] {
             By.cssSelector("h1"),
@@ -52,23 +50,9 @@ public class MoviePage {
             By.xpath("//*[contains(normalize-space(),'Loading format filters')]")
     };
 
-    private final By[] moviePosterLocators = new By[] {
-            By.cssSelector("img[alt*='poster' i]"),
-            By.cssSelector("img[src*='poster']"),
-            By.cssSelector(".movie-poster img"),
-            By.cssSelector("[data-testid*='poster'] img")
-    };
-
-    private final By[] synopsisLocators = new By[] {
-            By.xpath("//*[contains(normalize-space(),'Synopsis')]"),
-            By.xpath("//*[contains(normalize-space(),'Overview')]"),
-            By.cssSelector(".synopsis"),
-            By.cssSelector("[data-testid*='synopsis']")
-    };
-
     public MoviePage(WebDriver driver) {
         this.driver = driver;
-        this.wait = new WebDriverWait(driver, Duration.ofSeconds(15));
+        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(15));
     }
 
     public boolean isMovieDetailLoaded() {
@@ -105,13 +89,6 @@ public class MoviePage {
             }
         }
         return "";
-    }
-
-    /**
-     * Returns true when a valid MPAA rating string is present on the page.
-     */
-    public boolean isRatingDisplayed() {
-        return !getRating().isBlank();
     }
 
     public boolean isCastSectionDisplayed() {

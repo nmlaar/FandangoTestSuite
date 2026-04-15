@@ -14,7 +14,6 @@ import java.time.Duration;
 
 public class ErrorHandlingTests extends BaseTest {
 
-    // ── handleNoSearchResults ──────────────────────────────────────────────────────
     /**
      * Pass: "no results" message visible OR result count == 0, with Fandango
      *       title still in the browser tab (page did not crash).
@@ -43,7 +42,6 @@ public class ErrorHandlingTests extends BaseTest {
         );
     }
 
-    // ── handleTimeouts ────────────────────────────────────────────────────────────
     /**
      * Confirms that the WebDriverWait configuration in BaseTest correctly
      * throws a TimeoutException (rather than hanging indefinitely) when an
@@ -82,7 +80,6 @@ public class ErrorHandlingTests extends BaseTest {
         );
     }
 
-    // ── handleInvalidURL ─────────────────────────────────────────────────────────
     /**
      * Pass: page title still contains "Fandango" (site keeps its branding
      *       even on error pages), OR the URL redirects to a valid page.
@@ -112,7 +109,6 @@ public class ErrorHandlingTests extends BaseTest {
         );
     }
 
-    // ── handleSessionExpiration ───────────────────────────────────────────────────
     /**
      * Simulates a session expiration by clearing all browser cookies and local
      * storage, then reloading the current page. The test verifies that the site
@@ -151,7 +147,6 @@ public class ErrorHandlingTests extends BaseTest {
         );
     }
 
-    // ── handlePopupInterruptions ──────────────────────────────────────────────────
     /**
      * Pass: after dismissing popups, the search bar is still accessible and
      *       the Fandango home page is still loaded.

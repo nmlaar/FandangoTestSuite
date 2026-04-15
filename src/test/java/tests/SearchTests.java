@@ -55,7 +55,8 @@ public class SearchTests extends BaseTest {
         if (suggestions.isEmpty()) {
             searchPage = homePage.submitSearch();
             Assert.assertTrue(searchPage.isSearchResultsDisplayed(),
-                    "When inline suggestions are unavailable, the fallback search results page should still load.");
+                    "When inline suggestions are unavailable, " +
+                            "the fallback search results page should still load.");
             Assert.assertTrue(searchPage.getResultCount() > 0,
                     "The fallback search should still return movie results for a partial query.");
         } else {

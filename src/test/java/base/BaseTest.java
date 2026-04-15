@@ -48,7 +48,7 @@ public class BaseTest {
     public void setUp(Method method) {
         test = extent.createTest(method.getName());
         WebDriverManager.chromedriver().setup();
-
+        // Various "options" to prevent testing automation headaches and add utility
         ChromeOptions options = new ChromeOptions();
         options.addArguments("--start-maximized");
         options.addArguments("--disable-notifications");
@@ -80,6 +80,7 @@ public class BaseTest {
     public void tearDown(ITestResult result) {
         if (result != null) {
             if (result.getStatus() == ITestResult.FAILURE) {
+                // Screenshot function called here for failed tests
                 String screenshotPath = takeScreenshot(result.getName());
                 test.fail(result.getThrowable());
 
@@ -102,6 +103,7 @@ public class BaseTest {
     }
 
     protected void clearBrowserState() {
+        // Fresh test instances done by clearing local storage
         try {
             driver.manage().deleteAllCookies();
         } catch (Exception ignored) {}
@@ -119,6 +121,7 @@ public class BaseTest {
     }
 
     protected Optional<WebElement> findVisibleElement(By... locators) {
+        // Iterates through array of locators and checks if they are displayed
         for (By locator : locators) {
             List<WebElement> elements = driver.findElements(locator);
             for (WebElement element : elements) {
@@ -141,6 +144,7 @@ public class BaseTest {
         }
 
         try {
+            // Once the element is clickable, click the element
             wait.until(ExpectedConditions.elementToBeClickable(element.get())).click();
         } catch (Exception ignored) {
             try {

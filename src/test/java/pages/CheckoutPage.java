@@ -373,27 +373,6 @@ public class CheckoutPage {
     }
 
 
-    public boolean increaseTicketQuantity(int times) {
-        for (int i = 0; i < times; i++) {
-            boolean clicked = false;
-            for (By locator : ticketQuantityLocators) {
-                List<WebElement> elements = driver.findElements(locator);
-                for (WebElement element : elements) {
-                    try {
-                        if (!element.isDisplayed()) continue;
-                        safeClick(element);
-                        clicked = true;
-                        break;
-                    } catch (Exception ignored) {}
-                }
-                if (clicked) break;
-            }
-            if (!clicked) return false;
-        }
-        return true;
-    }
-
-
     /**
      * Waits for a button by its locator and clicks it.
      * Returns false (without throwing) if the button never becomes clickable.

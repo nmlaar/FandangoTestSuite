@@ -7,7 +7,6 @@ import org.testng.annotations.Test;
 import pages.CheckoutPage;
 
 public class CheckoutTests extends BaseTest {
-    // Shared guest email used across tests that need to reach the payment page
     private static final String GUEST_EMAIL = "test.guest@example.com";
 
     @Test

@@ -13,7 +13,6 @@ import java.util.List;
 
 public class UIValidationPage {
     private final WebDriver driver;
-    private final WebDriverWait wait;
 
     private final By[] buttonLocators = new By[] {
             By.tagName("button"),
@@ -23,7 +22,7 @@ public class UIValidationPage {
 
     public UIValidationPage(WebDriver driver) {
         this.driver = driver;
-        this.wait = new WebDriverWait(driver, Duration.ofSeconds(10));
+        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
     }
 
     /**
